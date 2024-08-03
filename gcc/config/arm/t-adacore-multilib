@@ -1,0 +1,433 @@
+# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# This is a target makefile fragment that attempts to get
+# multilibs built for the range of CPU's, FPU's and ABI's that
+# are relevant for the ARM architecture.  It should not be used in
+# conjunction with another make file fragment and assumes --with-arch,
+# --with-cpu, --with-fpu, --with-float, --with-mode have their default
+# values during the configure step.  We enforce this during the
+# top-level configury.
+
+s-mlib: $(srcdir)/config/arm/t-adacore-multilib
+
+MULTILIB_OPTIONS     =
+MULTILIB_DIRNAMES    =
+MULTILIB_EXCEPTIONS  =
+MULTILIB_MATCHES     =
+MULTILIB_REQUIRED    =
+MULTILIB_REUSE       =
+
+# We have the following hierachy:
+#   ISA: A32 (.) or T16/T32 (thumb).
+#   Architecture: ARMv6S-M (v6-m), ARMv7-M (v7-m), ARMv7E-M (v7e-m), ARMv7 (v7)
+#   FPU: VFPv3-D16 (fpv3 for v7), FPV4-SP-D16 (fpv4-sp for v7e-m),
+#        FPV5-SP-D16 (fpv5-sp for v7e-m), VFPv5-D16 (fpv5 for v7e-m).
+#   Float-abi: soft (., also used for softfp), or hard.
+
+# Options to build libraries with
+
+MULTILIB_OPTIONS     += mthumb
+MULTILIB_DIRNAMES    += thumb
+
+MULTILIB_OPTIONS       += march=armv6s-m/march=armv7-m/march=armv7e-m/march=armv7e-m+fp/march=armv7e-m+fp.dp/march=armv7e-m+fpv5/march=armv7/march=armv7+fp/march=armv7-r+fp.sp/march=armv8-m.base/march=armv8-m.main/march=armv8-m.main+fp/march=armv8-m.main+fp.dp
+MULTILIB_DIRNAMES      += v6-m v7-m v7e-m v7e-m/fpv4-sp v7e-m/fpv5 v7e-m/fpv5-sp v7-ar v7-ar/fpv3 v7-ar/fp-sp v8-m.base v8-m.main v8-m.main/fpv5-sp v8-m.main/fpv5
+
+MULTILIB_OPTIONS       += mfloat-abi=hard
+MULTILIB_DIRNAMES      += hard
+
+MULTILIB_OPTIONS     += mbig-endian
+MULTILIB_DIRNAMES    += be
+
+# Option combinations to build library with
+
+# Default CPU/Arch
+MULTILIB_REQUIRED      += mthumb
+
+# ARMv6-M
+MULTILIB_REQUIRED      += mthumb/march=armv6s-m
+
+# ARMv7-M
+MULTILIB_REQUIRED      += mthumb/march=armv7-m
+
+# ARMv7E-M
+MULTILIB_REQUIRED      += mthumb/march=armv7e-m
+MULTILIB_REQUIRED      += mthumb/march=armv7e-m+fp/mfloat-abi=hard
+MULTILIB_REQUIRED      += mthumb/march=armv7e-m+fp.dp/mfloat-abi=hard
+MULTILIB_REQUIRED      += mthumb/march=armv7e-m+fpv5/mfloat-abi=hard
+
+# ARMv7-R as well as ARMv7-A and ARMv8-A if aprofile was not specified
+MULTILIB_REQUIRED      += mthumb/march=armv7
+MULTILIB_REQUIRED      += mthumb/march=armv7+fp/mfloat-abi=hard
+
+MULTILIB_REQUIRED      += mthumb/march=armv7/mbig-endian
+MULTILIB_REQUIRED      += mthumb/march=armv7+fp/mfloat-abi=hard/mbig-endian
+
+# None of our targets use these, so we don't enable them.
+# MULTILIB_REQUIRED      += mthumb/march=armv7-r+fp.sp/mfloat-abi=softfp
+# MULTILIB_REQUIRED      += mthumb/march=armv7-r+fp.sp/mfloat-abi=hard
+
+# ARMv8-M
+MULTILIB_REQUIRED	+= mthumb/march=armv8-m.base
+MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main
+MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp/mfloat-abi=hard
+MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp.dp/mfloat-abi=hard
+
+# mthumb is implicit for all arch we build, but some cpus default to
+# marm.  Make sure we use the corresponding mthumb libs.
+MULTILIB_REUSE         += $(foreach LIB, $(subst =,.,$(subst .,\\.,$(patsubst mthumb/%,%,$(filter mthumb/%,$(MULTILIB_REQUIRED))))),mthumb/$(LIB)=$(LIB))
+
+# for each +fp*/mfloat-abi=hard, drop +fp* for non-hard float-abi,
+# for both arm and thumb
+MULTILIB_REUSE         += $(foreach LIB, $(subst =,.,$(subst .,\\.,$(MULTILIB_REQUIRED))),$(foreach FPOPT, $(filter +fp%/mfloat-abi.hard, $(word 2, $(subst /mfloat-abi.hard,/mfloat-abi.hard ,$(subst +, +,$(LIB))))),$(subst $(FPOPT),,$(LIB))=$(subst /mfloat-abi.hard,,$(LIB)) $(subst $(FPOPT),,$(LIB))=$(subst mthumb/,,$(subst /mfloat-abi.hard,,$(LIB)))))
+
+# Matches
+
+# CPU Matches - now implied by automatic self-specs remapping to arch
+# We self-test that, in the #ck#-commented-out MULTILIB_MATCHES,
+# the options separated by = both map to the same multilib.
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m0
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m0.small-multiply
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m0plus
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m0plus.small-multiply
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m1
+#ck# MULTILIB_MATCHES       += march?armv6s-m=mcpu?cortex-m1.small-multiply
+#ck# MULTILIB_MATCHES       += march?armv7-m=mcpu?cortex-m3
+#ck# MULTILIB_MATCHES       += march?armv7e-m=mcpu?cortex-m4
+#ck# MULTILIB_MATCHES       += march?armv7e-m=mcpu?cortex-m7
+#ck# MULTILIB_MATCHES       += march?armv8-m.base=mcpu?cortex-m23
+#ck# MULTILIB_MATCHES       += march?armv8-m.main=mcpu?cortex-m33
+#ck# MULTILIB_MATCHES       += march?armv8-m.main=mcpu?cortex-m35p
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-r4
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-r4f
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-r5
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-r7
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-r8
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?marvell-pj4
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?generic-armv7-a
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a8
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a9
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a5
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a7
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a15
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a12
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a17
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a15.cortex-a7
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a17.cortex-a7
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a32
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a35
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a53
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a57
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a57.cortex-a53
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a72
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a72.cortex-a53
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a73
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a73.cortex-a35
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?cortex-a73.cortex-a53
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?exynos-m1
+#ck# MULTILIB_MATCHES       += march?armv7=mcpu?xgene1
+
+# Arch Matches - better covered and updated in matches from t-arm-elf and t-multilib
+#ck# MULTILIB_MATCHES       += march?armv6s-m=march?armv6-m
+#ck# MULTILIB_MATCHES       += march?armv8-m.main=march?armv8-m.main+dsp
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv7-r
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv7-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv7ve
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8-a+crc
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.1-a
+# -march=arm8.1-a+crc says armv8.1-a does not support feature crc.
+#--# MULTILIB_MATCHES       += march?armv7=march?armv8.1-a+crc
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.2-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.2-a+fp16
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.3-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.4-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.5-a
+#ck# MULTILIB_MATCHES       += march?armv7=march?armv8.6-a
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv7-r+fp+idiv
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv7-a+simd
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.1-a+crypto
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.2-a+dotprod
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.3-a+i8mm
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.4-a+fp16+bf16+simd
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.5-a+simd+crypto+i8mm
+#ck# MULTILIB_MATCHES       += march?armv7+fp=march?armv8.6-a+crypto+bf16
+
+MULTILIB_MATCHES       += march?armv7=march?armv7-a
+
+# Copied from t-arm-elf
+MULTILIB_MATCHES     += $(foreach FPARCH, $(v7a_fps), \
+		          march?armv7+fp=march?armv7-a+$(FPARCH))
+
+MULTILIB_MATCHES     += $(foreach FPARCH, $(v7ve_fps), \
+		          march?armv7+fp=march?armv7ve+$(FPARCH))
+
+MULTILIB_MATCHES     += $(foreach ARCH, $(all_v7_a_r), \
+			  march?armv7+fp=march?$(ARCH) \
+			  march?armv7+fp=march?$(ARCH)+fp)
+
+MULTILIB_MATCHES     += $(foreach ARCH, $(all_v8_archs), \
+			  march?armv7+fp=march?$(ARCH) \
+			  $(foreach FPARCH, $(v8_fps), \
+			    march?armv7+fp=march?$(ARCH)+$(FPARCH)))
+
+# Copied from t-multilib
+# Produce the combinatorial list of extensions.  Where there are
+# multiple permutations for a combination, the ordering is the
+# selected by the forward ordering of the original list.  This matches
+# the canonical ordering generated by the canonicalizer in the driver.
+#
+# For example,
+#   $(call all_feat_combs, a b)
+# will produce
+#   +a +a+b +b
+# but will not include
+#   +b+a
+# The rule is recursive and can be called with any (reasonable) list of
+# extensions.
+all_feat_combs	= +$(firstword $(1)) \
+		  $(if $(wordlist 2, $(words $(1)), $(1)), \
+		    $(foreach OPT, \
+		      $(call all_feat_combs, \
+		        $(wordlist 2, $(words $(1)), $(1))), \
+		      +$(firstword $(1))$(OPT) $(OPT)),)
+
+v7_a_nosimd_variants	:= +fp +vfpv3 +vfpv3-d16-fp16 +vfpv3-fp16 +vfpv4-d16 +vfpv4
+v7_a_arch_variants	:= $(call all_feat_combs, mp sec)
+v7_a_simd_variants	:= +simd +neon-fp16 +neon-vfpv4
+v7_r_sp_variants	:= +fp.sp +fp.sp+idiv +vfpv3xd-fp16 +vfpv3xd-fp16+idiv
+v7_r_dp_variants	:= +fp +fp+idiv +vfpv3-d16-fp16 +vfpv3-d16-fp16+idiv
+v7ve_nosimd_variants	:= +vfpv3-d16 +vfpv3 +vfpv3-d16-fp16 +vfpv3-fp16 +fp +vfpv4
+v7ve_vfpv3_simd_variants := +neon +neon-fp16
+v7ve_vfpv4_simd_variants := +simd
+v8_a_nosimd_variants	:= +crc
+v8_a_simd_variants	:= $(call all_feat_combs, simd crypto)
+v8_1_a_simd_variants	:= $(call all_feat_combs, simd crypto)
+v8_2_a_simd_variants	:= $(call all_feat_combs, simd fp16 fp16fml crypto dotprod i8mm bf16)
+v8_4_a_simd_variants	:= $(call all_feat_combs, simd fp16 crypto i8mm bf16)
+v8_5_a_simd_variants    := $(call all_feat_combs, simd fp16 crypto i8mm bf16)
+v8_6_a_simd_variants    := $(call all_feat_combs, simd fp16 crypto i8mm bf16)
+v8_r_nosimd_variants	:= +crc
+v8_r_nosimd_variants	:= +crc
+
+# Map v7-r down onto common v7 code.
+MULTILIB_MATCHES	+= march?armv7=march?armv7-r
+MULTILIB_MATCHES	+= march?armv7=march?armv7-r+idiv
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v7_r_dp_variants), \
+			     march?armv7+fp=march?armv7-r$(ARCH))
+
+# Map v7-r single precision variants to v7-r with single precision.
+# (though we don't enable multilibs for them)
+MULTILIB_MATCHES	+= $(foreach ARCH, \
+			     $(filter-out +fp.sp, $(v7_r_sp_variants)), \
+			     march?armv7-r+fp.sp=march?armv7-r$(ARCH))
+
+# Map v8-r down onto common v7 code or v7-r sp.
+MULTILIB_MATCHES	+= march?armv7=march?armv8-r
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_r_nosimd_variants), \
+			     march?armv7=march?armv8-r$(ARCH))
+MULTILIB_MATCHES	+= $(foreach ARCH,+simd +crypto, \
+			     march?armv7+fp=march?armv8-r$(ARCH) \
+			     march?armv7+fp=march?armv8-r+crc$(ARCH))
+MULTILIB_MATCHES	+= march?armv7-r+fp.sp=march?armv8-r+fp.sp
+MULTILIB_MATCHES	+= march?armv7-r+fp.sp=march?armv8-r+crc+fp.sp
+
+# Map all v7-a
+MULTILIB_MATCHES	+= march?armv7=march?armv7-a
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v7_a_arch_variants), \
+			     march?armv7=march?armv7-a$(ARCH))
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v7_a_nosimd_variants) $(v7_a_simd_variants), \
+			     march?armv7+fp=march?armv7-a$(ARCH))
+
+MULTILIB_MATCHES	+= $(foreach ARCHVAR, $(v7_a_arch_variants), \
+			     $(foreach ARCH, $(v7_a_nosimd_variants) $(v7_a_simd_variants), \
+			       march?armv7+fp=march?armv7-a$(ARCHVAR)$(ARCH)))
+
+MULTILIB_MATCHES	+= march?armv7=march?armv7ve
+
+# ARMv7ve FP/SIMD variants: map down to v7+fp
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v7ve_nosimd_variants) $(v7ve_vfpv3_simd_variants) $(v7ve_vfpv4_simd_variants), \
+			     march?armv7+fp=march?armv7ve$(ARCH))
+
+# ARMv8
+MULTILIB_MATCHES	+= march?armv7=march?armv8-a
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_a_nosimd_variants), \
+			     march?armv7=march?armv8-a$(ARCH))
+
+# ARMv8 with SIMD
+MULTILIB_MATCHES	+= march?armv7+fp=march?armv8-a+crc+simd \
+			   $(foreach ARCH, $(v8_a_simd_variants), \
+			     march?armv7+fp=march?armv8-a$(ARCH) \
+			     march?armv7+fp=march?armv8-a+crc$(ARCH))
+
+# Baseline v8.1-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.1-a
+
+# Map all v8.1-a SIMD variants
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_1_a_simd_variants), \
+			     march?armv7+fp=march?armv8.1-a$(ARCH))
+
+# Baseline v8.2-a: map down to baseline v8-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.2-a
+
+# Baseline v8.3-a: map down to baseline v8-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.3-a
+
+# Map all v8.2-a SIMD variants.  v8.3-a SIMD variants have the same mappings
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_2_a_simd_variants), \
+			     march?armv7+fp=march?armv8.2-a$(ARCH) \
+			     march?armv7+fp=march?armv8.3-a$(ARCH))
+
+# Baseline v8.4-a: map down to baseline v8-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.4-a
+
+# Map all v8.4-a SIMD variants
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_4_a_simd_variants), \
+			     march?armv7+fp=march?armv8.4-a$(ARCH))
+
+# Baseline v8.5-a: map down to baseline v8-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.5-a
+
+# Map all v8.5-a SIMD variants
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_5_a_simd_variants), \
+			     march?armv7+fp=march?armv8.5-a$(ARCH))
+
+# Baseline v8.6-a: map down to baseline v8-a
+MULTILIB_MATCHES	+= march?armv7=march?armv8.6-a
+
+# Map all v8.6-a SIMD variants
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v8_6_a_simd_variants), \
+			     march?armv7+fp=march?armv8.6-a$(ARCH))
+
+# Copied from t-aprofile
+# Map all basic v7-a arch extensions to v7-a
+MULTILIB_MATCHES	+= $(foreach ARCH, $(v7_a_arch_variants), \
+			     march?armv7=march?armv7-a$(ARCH))
+
+# Adapted from t-aprofile
+MULTILIB_MATCHES	+= $(foreach ARCHVAR, $(v7_a_arch_variants), \
+			     $(foreach ARCH, $(v7_a_nosimd_variants) $(v7_a_simd_variants), \
+			       march?armv7+fp=march?armv7-a$(ARCHVAR)$(ARCH)))
+
+# Copied from t-rmprofile
+# Arch Matches
+MULTILIB_MATCHES	+= march?armv6s-m=march?armv6-m
+
+# Map all v8-m.main+dsp FP variants down the the variant without DSP.
+MULTILIB_MATCHES	+= march?armv8-m.main=march?armv8-m.main+dsp \
+			   $(foreach FP, +fp +fp.dp, \
+			     march?armv8-m.main$(FP)=march?armv8-m.main+dsp$(FP))
+
+# check-adacore-multilibs verifies that the multilib configuration is
+# self-consistent and matches our expectations.  Specifically, it
+# checks that (i) the options associated with each multilib directory
+# map back to that directory (self-consistency), (ii) that it also
+# maps the options between "Multilib selftest expectations" to the
+# corresponding directories (validation), and (iii) that each of our
+# MULTILIB_MATCHES commented-out with #ck# select the same multilib
+# dir for both options (matches).
+
+selftest: check-adacore-multilibs
+
+CHECK_MULTILIBS += check-multilibs-self-consistency
+check-multilibs-self-consistency: xgcc$(exeext)
+	@success=: looped=false ; \
+	for f in `$(GCC_FOR_TARGET) -print-multi-lib`; do \
+	  looped=: dir=`echo $$f | sed 's,;.*,,'` \
+	  opts=`echo $$f | sed 's,.*;,,;s,@, -,g'`; \
+	  [ "$$dir" = "`$(GCC_FOR_TARGET) -print-multi-directory $$opts`" ] \
+	  || { echo $@: $$opts failed to select multilib dir $$dir >&2; \
+	       success=false; }; \
+	done; $$success && $$looped
+
+CHECK_MULTILIBS += check-multilibs-validation
+check-multilibs-validation: xgcc$(exeext)
+	@success=: looped=false ; \
+	for f in `sed -n 's,^#st# ,,p' \
+		    $(srcdir)/config/arm/t-adacore-multilib`; do \
+	  looped=: dir=`echo $$f | sed 's,;.*,,'` \
+	  opts=`echo $$f | sed 's,.*;,,;s,@, -,g'`; \
+	  [ "$$dir" = "`$(GCC_FOR_TARGET) -print-multi-directory $$opts`" ] \
+	  || { echo $@: $$opts failed to select multilib dir $$dir >&2; \
+	       success=false; }; \
+	done; $$success && $$looped
+
+CHECK_MULTILIBS += check-multilibs-matches
+check-multilibs-matches: xgcc$(exeext)
+	@success=: looped=false ; \
+	for f in `sed -n 's,^#ck# MULTILIB_MATCHES *[+]= ,,p' \
+		    $(srcdir)/config/arm/t-adacore-multilib`; do \
+	  looped=: \
+	  opts1=`echo $$f | sed 's,=.*,,;s,?,=,g;s,^,-,;s, , -,g'` \
+	  opts2=`echo $$f | sed 's,.*=,,;s,?,=,g;s,^,-,;s, , -,g'`; \
+	  [ "`$(GCC_FOR_TARGET) -print-multi-directory $$opts1`" \
+	  = "`$(GCC_FOR_TARGET) -print-multi-directory $$opts2`" ] \
+	  || { echo $@: $$opts1 and $$opts2 select different multilibs >&2; \
+	       success=false; }; \
+	done; $$success && $$looped
+
+.PHONY: check-adacore-multilibs $(CHECK_MULTILIBS)
+check-adacore-multilibs: $(CHECK_MULTILIBS)
+	@echo multilib selftest passed
+
+# Multilib selftest expectations:
+# These are the expectations from gcc-7, minus 'hard', now rejected.
+# The syntax is: #st# <multilibdir>;[@<flag>][@<flag>]...
+#st# .;
+#st# thumb;@mthumb
+# hard;@mfloat-abi=hard
+#st# thumb/v7-ar/be;@march=armv7@mbig-endian
+#st# thumb/v7-ar/fpv3/hard/be;@march=armv7@mfpu=vfpv3-d16@mfloat-abi=hard@mbig-endian
+#st# thumb/v6-m;@mthumb@march=armv6s-m
+#st# thumb/v7-m;@mthumb@march=armv7-m
+#st# thumb/v7e-m;@mthumb@march=armv7e-m
+#st# thumb/v7-ar;@mthumb@march=armv7
+#st# thumb/v7e-m/fpv4-sp/hard;@mthumb@march=armv7e-m@mfpu=fpv4-sp-d16@mfloat-abi=hard
+#st# thumb/v7e-m/fpv5-sp/hard;@mthumb@march=armv7e-m@mfpu=fpv5-sp-d16@mfloat-abi=hard
+#st# thumb/v7e-m/fpv5/hard;@mthumb@march=armv7e-m@mfpu=fpv5-d16@mfloat-abi=hard
+#st# thumb/v7-ar/fpv3/hard;@mthumb@march=armv7@mfpu=vfpv3-d16@mfloat-abi=hard
+#st# thumb/v8-m.main;@mthumb@march=armv8-m.main
+#st# thumb/v8-m.main/fpv5/hard;@mthumb@march=armv8-m.main@mfpu=fpv5-d16@mfloat-abi=hard
+#st# thumb/v8-m.main/fpv5-sp/hard;@mthumb@march=armv8-m.main@mfpu=fpv5-sp-d16@mfloat-abi=hard
+# These test remappings from -marm to -mthumb.
+#st# .;@marm
+#st# thumb/v6-m;@marm@march=armv6s-m
+#st# thumb/v7-m;@marm@march=armv7-m
+#st# thumb/v7e-m;@marm@march=armv7e-m
+#st# thumb/v7-ar;@marm@march=armv7
+#st# thumb/v7e-m/fpv4-sp/hard;@marm@march=armv7e-m@mfpu=fpv4-sp-d16@mfloat-abi=hard
+#st# thumb/v7e-m/fpv5-sp/hard;@marm@march=armv7e-m@mfpu=fpv5-sp-d16@mfloat-abi=hard
+#st# thumb/v7e-m/fpv5/hard;@marm@march=armv7e-m@mfpu=fpv5-d16@mfloat-abi=hard
+#st# thumb/v7-ar/fpv3/hard;@marm@march=armv7@mfpu=vfpv3-d16@mfloat-abi=hard
+# These test float-abi remappings, including dropping +fp.
+#st# thumb/v6-m;@march=armv6s-m@mfloat-abi=soft
+#st# thumb/v7-m;@march=armv7-m@mfloat-abi=softfp
+#st# thumb/v7e-m;@march=armv7e-m+fp@mfloat-abi=softfp
+#st# thumb/v7-ar;@march=armv7+fp@mfloat-abi=soft
+
+# These are combinations of flags used in our runtimes.
+#st# thumb/v7-ar/fpv3/hard/be;@mbig-endian@mhard-float@mcpu=cortex-r4f@mfpu=vfpv3-d16@marm@mbe32
+#st# thumb/v7-ar/fpv3/hard/be;@mbig-endian@mhard-float@mcpu=cortex-r5@mfpu=vfpv3-d16@marm@mbe32
+#st# thumb/v7-ar/fpv3/hard;@mlittle-endian@mhard-float@mcpu=cortex-a9@mfpu=vfpv3@marm@mno-unaligned-access
+#st# thumb/v7e-m/fpv4-sp/hard;@mlittle-endian@mhard-float@mcpu=cortex-m4@mfpu=fpv4-sp-d16@mthumb
+#st# thumb/v7e-m/fpv4-sp/hard;@mlittle-endian@mthumb@mhard-float@mcpu=cortex-m4@mfpu=fpv4-sp-d16
+#st# thumb/v6-m;@mlittle-endian@mthumb@msoft-float@mcpu=cortex-m0
+#st# thumb/v6-m;@mlittle-endian@mthumb@msoft-float@mcpu=cortex-m0plus
+#st# thumb/v6-m;@mlittle-endian@mthumb@msoft-float@mcpu=cortex-m1
+#st# thumb/v7-m;@mlittle-endian@mthumb@msoft-float@mcpu=cortex-m3
+#st# thumb/v7e-m;@mlittle-endian@mthumb@msoft-float@mcpu=cortex-m4

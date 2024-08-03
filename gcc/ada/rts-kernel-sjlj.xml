@@ -1,0 +1,13 @@
+<!-- gprbuild xml configuration addendum for the gcc-sjlj runtime. -->
+<!-- gcc-sjlj eh requires -fsjlj at link time. -->
+<gprconfig>
+  <configuration>
+   <config>
+
+  package Linker is
+     for Required_Switches use ("-fsjlj");
+  end Linker;
+
+   </config>
+  </configuration>
+</gprconfig>

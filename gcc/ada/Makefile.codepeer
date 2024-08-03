@@ -1,0 +1,51 @@
+GNAT_SRC=.
+
+.PHONY: setup force clean
+
+# 'all' takes about 20 minutes on a typical laptop.
+all: codepeer
+
+GEN_IL_FILES = nmake.ads \
+  nmake.adb \
+  seinfo.ads \
+  sinfo-nodes.ads \
+  sinfo-nodes.adb \
+  einfo-entities.ads \
+  einfo-entities.adb
+
+setup:
+	mkdir -p obj obj-tools out
+	for f in `cd $(GNAT_SRC); ls gen_il*.ad? xutil.ad? *-tmpl xsnamest.adb`; \
+	do \
+	  cp -p $(GNAT_SRC)/$$f obj-tools; \
+	done
+	cp -p $(GNAT_SRC)/sdefault_adb.gnat_util obj/sdefault.adb
+	cd obj-tools && gnatmake -q -j0 xsnamest && \
+	  ./xsnamest && \
+	  mv snames.ns ../obj/snames.ads && mv snames.nb ../obj/snames.adb
+	cd obj-tools && gnatmake -q -j0 -I../obj gen_il-main.adb
+	cd obj-tools && ./gen_il-main
+	cd obj-tools && mv $(GEN_IL_FILES) ../obj
+
+codepeer: setup force
+	codepeer -Pcodepeer -output-msg
+
+codepeer-auto: setup force
+	codepeer --version | tee out/version.out
+	codepeer -quiet -Pcodepeer -output-msg 2>&1 | tee out/gnat.out
+	codepeer -quiet -Pcodepeer_rt -output-msg 2>&1 | tee out/libgnat.out
+	codepeer -quiet -Pcodepeer_minimal_rt -output-msg 2>&1 | tee out/minimal_rt.out
+	@echo "always_pass:PASSED" > out/results
+	@echo "version:XFAIL:always fails" >> out/results
+	@for f in gnat libgnat minimal_rt; do \
+	  if [ -s out/$$f.out ]; then \
+	    echo "$$f:FAILED:unexpected messages" >> out/results; \
+	  else \
+	    echo "$$f:PASSED" >> out/results; \
+	  fi; \
+	done
+
+clean:
+	rm -rf obj obj-tools out
+
+force:

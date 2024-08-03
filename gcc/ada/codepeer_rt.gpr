@@ -1,0 +1,110 @@
+project CodePeer_RT is
+
+   for Source_Dirs use ("libgnat");
+   for Object_Dir use "obj-rt";
+
+   package CodePeer is
+      for Switches use
+        ("-gnatX",
+         "-no-unused-annotate-warning",
+         "-j0", "-level", "1", "-messages", "max",
+         "--be-messages=-array_index_check,-suspicious_constant_operation," &
+         "-dead_code,-unused_assignment,-useless_reassignment," &
+         "-unused_out_parameter,-access_check,-range_check,-assertion," &
+         "-overflow_check,-suspicious_precondition,-conditional_check," &
+         "-raise_exception,-unused_assignment_to_global," &
+         "-condition_predetermined,-subp_always_fails,-postcondition," &
+         "-suspicious_input,-loop_does_not_complete_normally",
+         "--no-infer");
+      --  Need to use -messages max since messages on runtime files are not
+      --  displayed otherwise.
+      --  See comments in codepeer.gpr for other settings.
+
+      for Additional_Patterns use "codepeer.xml";
+      --  Suppress other likely false positives
+
+      for Excluded_Source_Files use
+        ("a-strunb.ads");  --  false positives
+   end CodePeer;
+
+   package Naming is
+      for Spec ("interfaces") use "interfac__2020.ads";
+   end Naming;
+
+   for Excluded_Source_Files use
+     ("i-vxwoio.ads",
+      "i-vxwoio.adb",
+      "i-vxwork.ads",
+      "i-c.adb",          --  no interesting messages
+      "interfac.ads",
+      "memtrack.adb",
+      "s-gloloc.adb",
+      "s-mastop.adb",
+      "s-resfil.adb",     --  lots of time spent, and false positives
+      "s-wchcnv.adb",     --  codepeer is getting confused on this unit
+      "s-wchwts.adb",     --  ditto
+      "system-aix.ads",
+      "system-darwin-arm.ads",
+      "system-darwin-ppc.ads",
+      "system-darwin-x86.ads",
+      "system-djgpp.ads",
+      "system-dragonfly-x86_64.ads",
+      "system-freebsd.ads",
+      "system-hpux.ads",
+      "system-hpux-ia64.ads",
+      "system-linux-alpha.ads",
+      "system-linux-arm.ads",
+      "system-linux-hppa.ads",
+      "system-linux-ia64.ads",
+      "system-linux-m68k.ads",
+      "system-linux-mips.ads",
+      "system-linux-ppc.ads",
+      "system-linux-riscv.ads",
+      "system-linux-s390.ads",
+      "system-linux-sh4.ads",
+      "system-linux-sparc.ads",
+      "system-linux-x86.ads",
+      "system-lynxos178-ppc.ads",
+      "system-lynxos178-x86.ads",
+      "system-mingw.ads",
+      "system-qnx-aarch64.ads",
+      "system-rtems.ads",
+      "system-solaris-sparc.ads",
+      "system-solaris-x86.ads",
+      "system-vxworks7-aarch64.ads",
+      "system-vxworks7-aarch64-rtp-smp.ads",
+      "system-vxworks7-arm.ads",
+      "system-vxworks7-arm-rtp-smp.ads",
+      "system-vxworks7-e500-kernel.ads",
+      "system-vxworks7-e500-rtp.ads",
+      "system-vxworks7-e500-rtp-smp.ads",
+      "system-vxworks7-ppc64-kernel.ads",
+      "system-vxworks7-ppc64-rtp-smp.ads",
+      "system-vxworks7-ppc-kernel.ads",
+      "system-vxworks7-ppc-rtp.ads",
+      "system-vxworks7-ppc-rtp-smp.ads",
+      "system-vxworks7-x86_64-kernel.ads",
+      "system-vxworks7-x86_64-rtp-smp.ads",
+      "system-vxworks7-x86-kernel.ads",
+      "system-vxworks7-x86-rtp.ads",
+      "system-vxworks7-x86-rtp-smp.ads",
+      "system-vxworks-arm.ads",
+      "system-vxworks-arm-rtp.ads",
+      "system-vxworks-arm-rtp-smp.ads",
+      "system-vxworks-e500-kernel.ads",
+      "system-vxworks-e500-rtp.ads",
+      "system-vxworks-e500-rtp-smp.ads",
+      "system-vxworks-e500-vthread.ads",
+      "system-vxworks-ppc.ads",
+      "system-vxworks-ppc-kernel.ads",
+      "system-vxworks-ppc-ravenscar.ads",
+      "system-vxworks-ppc-rtp.ads",
+      "system-vxworks-ppc-rtp-smp.ads",
+      "system-vxworks-ppc-vthread.ads",
+      "system-vxworks-x86.ads",
+      "system-vxworks-x86-kernel.ads",
+      "system-vxworks-x86-rtp.ads",
+      "system-vxworks-x86-rtp-smp.ads",
+      "system-vxworks-x86-vthread.ads");
+
+end CodePeer_RT;

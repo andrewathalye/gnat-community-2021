@@ -1,0 +1,3 @@
+LIB2ADDEH += $(srcdir)/config/arm/unwind-arm-vxworks.c
+
+INTERNAL_CFLAGS += -DTARGET_OS_PROVIDES_FP16_IEEE

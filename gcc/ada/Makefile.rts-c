@@ -1,0 +1,190 @@
+# Makefile to build a minimal runtime (rts-c) for C targets
+#   Copyright (C) 2015, AdaCore
+
+GNAT_SRC=
+
+ADAINCLUDE=rts-c/adainclude
+ADALIB=rts-c/adalib
+BIN=
+
+MKDIR=mkdir -p
+RM=rm -f
+RMDIR=rm -rf
+CHMOD=chmod
+STRIP=strip
+
+COMMON_SRCS= \
+standard.h   \
+libgnat/a-assert.adb \
+libgnat/a-assert.ads \
+libgnat/ada.ads      \
+libgnat/a-unccon.ads \
+libgnat/a-uncdea.ads \
+libgnat/a-numeri.ads \
+libgnat/gnat.ads     \
+libgnat/g-souinf.ads \
+libgnat/i-cexten.ads \
+libgnat/interfac.ads \
+libgnat/s-atacco.adb \
+libgnat/s-atacco.ads \
+libgnat/s-exponn.adb \
+libgnat/s-exponn.ads \
+libgnat/s-expont.adb \
+libgnat/s-expont.ads \
+libgnat/s-exnint.ads \
+libgnat/s-expint.ads \
+libgnat/s-fatflt.ads \
+libgnat/s-fatgen.adb \
+libgnat/s-fatgen.ads \
+libgnat/s-fatlfl.ads \
+libgnat/s-fatllf.ads \
+libgnat/s-imen16.ads \
+libgnat/s-imen32.ads \
+libgnat/s-imenu8.ads \
+libgnat/s-imgboo.adb \
+libgnat/s-imgboo.ads \
+libgnat/s-imagei.adb \
+libgnat/s-imagei.ads \
+libgnat/s-imagen.adb \
+libgnat/s-imagen.ads \
+libgnat/s-imageu.adb \
+libgnat/s-imageu.ads \
+libgnat/s-imgint.ads \
+libgnat/s-imglli.ads \
+libgnat/s-imgllu.ads \
+libgnat/s-imguns.ads \
+libgnat/s-stoele.adb \
+libgnat/s-stoele.ads \
+libgnat/s-unstyp.ads \
+libgnat/text_io.ads  \
+libgnat/unchconv.ads \
+libgnat/unchdeal.ads
+
+ifneq ($(OVERFLOW_CHECKS),)
+COMMON_SRCS += \
+  libgnat/s-aridou.ads \
+  libgnat/s-aridou.adb \
+  libgnat/s-arit64.ads \
+  libgnat/s-arit64.adb
+endif
+
+COMPILABLE_SPECS= \
+ada.ads      \
+a-nuelfu.ads \
+a-numeri.ads \
+a-nlelfu.ads \
+a-unccon.ads \
+a-uncdea.ads \
+gnat.ads     \
+i-c.ads      \
+i-cexten.ads \
+interfac.ads \
+s-atacco.ads \
+s-exnint.ads \
+s-expint.ads \
+s-fatflt.ads \
+g-souinf.ads \
+s-imgint.ads \
+s-imglli.ads \
+s-imgllu.ads \
+s-imguns.ads \
+s-unstyp.ads \
+system.ads   \
+text_io.ads  \
+unchconv.ads \
+unchdeal.ads
+
+# Run-time packages compiled with -gnatws because their compilation reports
+# warnings on literals of long numbers whose computation relies on the C
+# function powl()
+COMPILABLE_SPECS_WARNINGS_OFF= \
+s-fatllf.ads \
+s-fatlfl.ads
+
+ifeq ($(OS),Windows_NT)
+EXE_EXT=.exe
+else
+EXE_EXT=
+endif
+
+ifeq ($(uname -s),Darwin)
+SPARK2C=gcc -gnatceg
+else
+SPARK2C=gcc -gnatceg -m32
+endif
+
+COMPILE=$(SPARK2C) -c -gnatpg -nostdinc -I../adainclude
+
+# List of GNAT tools for which we want to create a wrapper
+TOOLS=gcc gnat gnatbind gnatcheck gnatchop gnatclean \
+  gnatfind gnatkr gnatlink gnatls gnatmake gnatmetric gnatname \
+  gnatpp gnatprep gnatstub gnattest gnatxref
+
+create_zfp:
+ifeq ($(GNAT_SRC),)
+	@echo "error: GNAT_SRC must be defined"
+	@exit 1
+endif
+	@if [ ! -f $(GNAT_SRC)/hie/system-c.ads ]; then \
+	  echo "error: system-c.ads not found in GNAT_SRC"; \
+	  exit 1; \
+	fi
+	$(RMDIR) $(ADAINCLUDE) $(ADALIB)
+	$(MKDIR) $(ADAINCLUDE) $(ADALIB)
+	for f in $(COMMON_SRCS); do \
+	  cp -p $(GNAT_SRC)/$$f $(ADAINCLUDE); \
+	done
+	cp -p $(GNAT_SRC)/hie/a-except__c.adb $(ADAINCLUDE)/a-except.adb
+	cp -p $(GNAT_SRC)/hie/a-except__zfp.ads $(ADAINCLUDE)/a-except.ads
+	cp -p $(GNAT_SRC)/hie/a-nuelfu__c.ads $(ADAINCLUDE)/a-nuelfu.ads
+	cp -p $(GNAT_SRC)/hie/a-nlelfu__c.ads $(ADAINCLUDE)/a-nlelfu.ads
+	cp -p $(GNAT_SRC)/hie/a-reatim__c.ads $(ADAINCLUDE)/a-reatim.ads
+	cp -p $(GNAT_SRC)/hie/a-reatim__c.adb $(ADAINCLUDE)/a-reatim.adb
+	cp -p $(GNAT_SRC)/hie/a-retide__c.ads $(ADAINCLUDE)/a-retide.ads
+	cp -p $(GNAT_SRC)/hie/a-retide__c.adb $(ADAINCLUDE)/a-retide.adb
+	cp -p $(GNAT_SRC)/hie/a-textio__c.adb $(ADAINCLUDE)/a-textio.adb
+	cp -p $(GNAT_SRC)/hie/a-textio__c.ads $(ADAINCLUDE)/a-textio.ads
+	cp -p $(GNAT_SRC)/hie/g-io__c.ads $(ADAINCLUDE)/g-io.ads
+	cp -p $(GNAT_SRC)/hie/i-c__hie.ads $(ADAINCLUDE)/i-c.ads
+	cp -p $(GNAT_SRC)/hie/s-assert__c.ads $(ADAINCLUDE)/s-assert.ads
+	cp -p $(GNAT_SRC)/hie/s-assert__xi.adb $(ADAINCLUDE)/s-assert.adb
+ifeq ($(SECONDARY_STACK),)
+	cp -p $(GNAT_SRC)/hie/system-c.ads $(ADAINCLUDE)/system.ads
+	cp -p $(GNAT_SRC)/hie/a-tags__c.ads $(ADAINCLUDE)/a-tags.ads
+	cp -p $(GNAT_SRC)/hie/a-tags__c.adb $(ADAINCLUDE)/a-tags.adb
+else
+	cp -p $(GNAT_SRC)/hie/system-ccg.ads $(ADAINCLUDE)/system.ads
+	cp -p $(GNAT_SRC)/hie/a-tags__hie.ads $(ADAINCLUDE)/a-tags.ads
+	cp -p $(GNAT_SRC)/hie/a-tags__hie.adb $(ADAINCLUDE)/a-tags.adb
+	cp -p $(GNAT_SRC)/hie/s-secsta__zfp.ads $(ADAINCLUDE)/s-secsta.ads
+	cp -p $(GNAT_SRC)/hie/s-secsta__zfp.adb $(ADAINCLUDE)/s-secsta.adb
+	cp -p $(GNAT_SRC)/hie/s-sssita.ads $(ADAINCLUDE)/s-sssita.ads
+	cp -p $(GNAT_SRC)/hie/s-sssita.adb $(ADAINCLUDE)/s-sssita.adb
+	cp -p $(GNAT_SRC)/hie/s-parame__zfp.ads $(ADAINCLUDE)/s-parame.ads
+	cd $(ADALIB) && $(COMPILE) ../adainclude/s-parame.ads
+endif
+	cd $(ADALIB) && for f in $(COMPILABLE_SPECS); do \
+	  $(COMPILE) ../adainclude/$$f || exit 1; \
+	done
+	cd $(ADALIB) && for f in $(COMPILABLE_SPECS_WARNINGS_OFF); do \
+	  $(COMPILE) -gnatws ../adainclude/$$f || exit 1; \
+	done
+	cd $(ADALIB) && for f in ../adainclude/*.adb; do \
+	  $(COMPILE) $$f || exit 1; \
+	done
+	cd $(ADALIB) && $(CHMOD) a-wx *.ali
+
+all: create_zfp
+ifeq ($(BIN),)
+	@echo "error: BIN must be defined"
+	@exit 1
+endif
+	$(MKDIR) __tmp__
+	cp -p $(GNAT_SRC)/gnatccg_wrapper.adb __tmp__
+	cd __tmp__ && gnatmake -q gnatccg_wrapper.adb -o c-gcc && \
+	  $(STRIP) c-gcc$(EXE_EXT)
+	for t in $(TOOLS); do \
+	  cp -p __tmp__/c-gcc$(EXE_EXT) "$(BIN)/c-$$t$(EXE_EXT)"; \
+	done
+	$(RM) -r __tmp__
+

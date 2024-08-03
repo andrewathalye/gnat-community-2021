@@ -1,0 +1,4 @@
+# For binary compatibility with t-gthr-win32
+LIB2ADDEH += $(srcdir)/config/i386/gthr-win32-thread.c
+SHLIB_PTHREAD_CFLAG = -pthread
+SHLIB_PTHREAD_LDFLAG = -Wl,-lpthread

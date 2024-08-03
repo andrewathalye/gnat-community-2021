@@ -1,0 +1,79 @@
+project CodePeer_Minimal_RT is
+   for Object_Dir use "obj-minimal";
+   for Source_Dirs use ("hie", "libgnat");
+   for Source_Files use
+     ("ada.ads", "a-except__zfp.adb", "a-except__zfp.ads",
+      "a-tags__hie.adb", "a-tags__hie.ads", "a-unccon.ads",
+      "g-debuti.adb", "g-debuti.ads", "gnat.ads", "g-souinf.ads",
+      "i-c.ads", "i-cexten.ads", "interfac.ads", "machcode.ads",
+      "s-addope.adb", "s-addope.ads", "s-arit64.adb", "s-arit64.ads",
+      "s-assert.adb", "s-assert.ads", "s-atacco.adb", "s-atacco.ads",
+      "s-bitops.adb", "s-bitops.ads", "s-boarop.ads",
+      "s-carsi8.adb", "s-carsi8.ads", "s-carun8.adb", "s-carun8.ads",
+      "s-casi16.adb", "s-casi16.ads", "s-casi32.adb", "s-casi32.ads",
+      "s-casi64.adb", "s-casi64.ads", "s-caun16.adb", "s-caun16.ads",
+      "s-caun32.adb", "s-caun32.ads", "s-caun64.adb", "s-caun64.ads",
+      "s-exnint.adb", "s-exnint.ads", "s-exnlli.adb", "s-exnlli.ads",
+      "s-expint.adb", "s-expint.ads", "s-explli.adb", "s-explli.ads",
+      "s-expllu.adb", "s-expllu.ads", "s-expmod.adb", "s-expmod.ads",
+      "s-expuns.adb", "s-expuns.ads", "s-fatflt.ads",
+      "s-fatgen.adb", "s-fatgen.ads", "s-fatlfl.ads", "s-fatllf.ads",
+      "s-valflt.ads", "s-vallfl.ads", "s-valllf.ads",
+      "s-flocon.adb", "s-flocon.ads",
+      "s-geveop.adb", "s-geveop.ads", "s-imenne.adb", "s-imenne.ads",
+      "s-imgboo.adb", "s-imgboo.ads", "s-imgcha.adb", "s-imgcha.ads",
+      "s-imgint.adb", "s-imgint.ads", "s-imglli.adb", "s-imglli.ads",
+      "s-imgllu.adb", "s-imgllu.ads", "s-imgrea.adb", "s-imgrea.ads",
+      "s-imguns.adb", "s-imguns.ads", "s-imgwiu.adb", "s-imgwiu.ads",
+      "s-imaged.ads", "s-imaged.adb", "s-imde32.ads", "s-imde64.ads",
+      "s-imguti.ads", "s-imguti.adb", "s-arit32.ads", "s-arit32.adb",
+      "s-imagef.ads", "s-imagef.adb", "s-imfi32.ads", "s-imfi64.ads",
+      "s-maccod.ads", "s-memcom.adb", "s-memcom.ads",
+      "s-memcop.adb", "s-memcop.ads", "s-memmov.adb", "s-memmov.ads",
+      "s-memory__zfp.adb", "s-memory__zfp.ads", "s-memset.adb", "s-memset.ads",
+      "s-memtyp.ads", "s-parame.ads", "s-powllf.ads",
+      "s-secsta__zfp.adb", "s-secsta__zfp.ads", "s-sssita.adb", "s-sssita.ads",
+      "s-stoele.adb", "s-stoele.ads",
+      "s-traceb__arm.adb", "s-traceb__cert.ads", "s-traceb.ads",
+      "s-tracon.ads", "s-traent.adb", "s-traent.ads", "s-unstyp.ads",
+      "s-veboop.adb", "s-veboop.ads", "s-vector.ads", "unchconv.ads");
+
+   package Naming is
+      for Spec ("Ada.Exceptions") use "a-except__zfp.ads";
+      for Body ("Ada.Exceptions") use "a-except__zfp.adb";
+      for Spec ("Ada.Tags") use "a-tags__hie.ads";
+      for Body ("Ada.Tags") use "a-tags__hie.adb";
+      for Spec ("System.Secondary_Stack") use "s-secsta__zfp.ads";
+      for Body ("System.Secondary_Stack") use "s-secsta__zfp.adb";
+      for Spec ("System.Memory") use "s-memory__zfp.ads";
+      for Body ("System.Memory") use "s-memory__zfp.adb";
+      for Spec ("System.Traceback") use "s-traceb__cert.ads";
+      for Body ("System.Traceback") use "s-traceb__arm.adb";
+   end Naming;
+
+   package CodePeer is
+      for Switches use
+        ("-gnatdY", "-level", "max", "-messages", "normal", "--no-infer",
+         "--be-messages=-suspicious_constant_operation",
+         "-no-unused-annotate-warning",
+         "-no-propagation", "ada.tags.length",
+         "-no-propagation", "system.arith_32.to_pos_int",
+         "-no-propagation", "system.arith_64.impl.to_pos_int",
+         "-no-propagation", "system.arith_64.multiply_with_ovflo_check",
+         "-no-propagation", "system.arith_64.impl.scaled_divide",
+         "-no-propagation", "system.arith_64.scaled_divide64",
+         "-no-propagation", "system.img_util.set_decimal_digits.set",
+         "-no-propagation", "system.img_util.set_decimal_digits",
+         "-no-propagation", "system.img_util.set_decimal_digits.round",
+         "-no-propagation", "system.img_util.set_decimal_digits.set_digits",
+         "-no-propagation", "system.img_real.set_image_real.set",
+         "-no-propagation", "system.img_real.set_image_real.set_digs",
+         "-no-propagation", "system.img_real.set_image_real.convert_integer",
+         "-no-propagation", "system.val_flt.impl.integer_to_real",
+         "-no-propagation", "system.val_llf.impl.integer_to_real",
+         "-no-propagation", "system.val_lflt.impl.integer_to_real",
+         "-no-propagation", "system.val_flt.impl.impl.scan_decimal_digits",
+         "-no-propagation", "system.val_lflt.impl.impl.scan_decimal_digits");
+   end CodePeer;
+
+end CodePeer_Minimal_RT;

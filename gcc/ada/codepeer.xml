@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<Message_Probability_Rules>
+
+<!-- suppress messages that are likely false positives -->
+<Message_Rule Matching_Probability="SUPPRESSED">
+  <Message_Pattern>
+    <Bool_Specifier Name_Of_Boolean_Attribute="Message_Likely_False_Positive">
+    </Bool_Specifier>
+    <String_Specifier
+      Complemented="YES"
+      Name_Of_String_Attribute="Check_Kind"
+      String_To_Match="INVALID_CHECK">
+    </String_Specifier>
+  </Message_Pattern>
+</Message_Rule>
+
+<Message_Rule Matching_Probability="SUPPRESSED">
+  <Message_Pattern>
+    <String_Specifier
+      Name_Of_String_Attribute="Check_Kind"
+      String_To_Match="INVALID_CHECK">
+    </String_Specifier>
+    <String_Specifier
+      Name_Of_String_Attribute="Text"
+      String_To_Match="*{.all,(*),'Result,unsigned_32(}*">
+    </String_Specifier>
+  </Message_Pattern>
+</Message_Rule>
+
+<Message_Rule Matching_Probability="SUPPRESSED">
+  <Message_Pattern>
+    <String_Specifier
+      Name_Of_String_Attribute="Check_Kind"
+      String_To_Match="PRECONDITION_CHECK">
+    </String_Specifier>
+  </Message_Pattern>
+</Message_Rule>
+
+<Message_Rule Matching_Probability="SUPPRESSED">
+  <Message_Pattern>
+    <String_Specifier
+      Name_Of_String_Attribute="Check_Kind"
+      String_To_Match="*DEAD_EDGE_WARNING">
+    </String_Specifier>
+    <String_Specifier
+      Name_Of_String_Attribute="Text"
+      String_To_Match="*.all.*">
+    </String_Specifier>
+  </Message_Pattern>
+</Message_Rule>
+
+</Message_Probability_Rules>

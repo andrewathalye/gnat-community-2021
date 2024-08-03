@@ -1,0 +1,45 @@
+project CodePeer is
+
+   for Source_Dirs use ("obj", ".");
+   for Object_Dir use "obj";
+
+   for Excluded_Source_Files use
+     ("sa_messages.adb",
+      "gnatccg_wrapper.adb",
+      "indepsw-gnu.adb",
+      "indepsw-darwin.adb",
+      "indepsw-aix.adb",
+      "ada_get_targ.adb");
+   --  sa_messages.adb depends on non GNAT sources, other files are variants
+
+   package Builder is
+      for Switches ("Ada") use ("-m");
+   end Builder;
+
+   package CodePeer is
+      for Switches use
+        ("-j0", "-level", "1",
+         "--be-messages=-array_index_check,-suspicious_constant_operation," &
+         "-dead_code", "--no-infer");
+      --  Array index checks reported by CodePeer on GNAT are mostly related
+      --  to physical limits, e.g. the maximal number of artifacts of some sort
+      --  that GNAT allows. Such messages are not useful, so we suppress them.
+      --  Suspicious Constant Operation messages are currently all false
+      --  positives.
+      --  Also suppress dead code messages: they are always associated with a
+      --  test always true/false and these are the interesting messages.
+      --  If we need to annotate these messages, we will only need to annotate
+      --  one message instead of two.
+
+      for Excluded_Source_Files use
+      ("par.adb",
+       --  Parsing is all implemented in the file par.adb and its separate files
+       --  par-***.adb, which cannot be analyzed separately, causing one
+       --  partition to take twice as much time as all other combined.
+       --  Exclude par.adb from analysis to avoid this blowup.
+       "xleaps.adb"
+       --  This file generates false positives, exclude it for now
+      );
+   end CodePeer;
+
+end CodePeer;

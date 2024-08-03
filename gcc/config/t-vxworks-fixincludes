@@ -1,0 +1,27 @@
+# Copyright (C) 2002-2019 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# SYSTEM header dirs settings for VxWorks, to be coordinated with
+# the configuration of a sysroot-headers-suffix to help locate headers
+# depending on the kernel/rtp mode.
+
+# SYSTEM_HEADER_DIR is used when the user installs gcc (fixincludes)
+SYSTEM_HEADER_DIR="'$$(eval echo $${sysroot_headers_suffix})'"
+
+# BUILD_SYSTEM_HEADER_DIR is used when building gcc only
+BUILD_SYSTEM_HEADER_DIR=$$(eval echo $${sysroot_headers_suffix})
